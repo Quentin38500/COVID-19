@@ -45,10 +45,12 @@ with requests.get(url_rea, stream=True) as r:
             else:
                 month = date.month
             if date.day < 10:
-                day = str(f"0{date.day}")
+                day_minus_one = str(f"0{date.day - 1}")
+                day_minus_two = str(f"0{date.day - 2}")
             else:
-                day = date.day
-            if item[0] == "84" and item[1] == "0" and item[2] == f"{date.year}-{month}-{day - 1}":
+                day_minus_one = date.day - 1
+                day_minus_two = date.day - 2
+            if item[0] == "84" and item[1] == "0" and item[2] == f"{date.year}-{month}-{day_minus_one}":
                 rea_auvergne_rhone_alpes = item[4]
                 hosp_auvergne_rhone_alpes = item[3]
                 dc_auvergne_rhone_alpes = item[6]
@@ -57,28 +59,40 @@ with requests.get(url_rea, stream=True) as r:
 r = requests.get(url_france)
 datas = json.loads(r.content)
 for data in datas:
-    if data["lastUpdatedAtSource"] == f"{date.year}-{month}-{day - 1}T00:00:00.000Z":
+    if data["lastUpdatedAtSource"] == f"{date.year}-{month}-{day_minus_one}T00:00:00.000Z":
         total_confirmed["France"] = data["infected"]
         total_deaths["France"] = data["deceased"]
-    if data["lastUpdatedAtSource"] == f"{date.year}-{month}-{day - 2}T00:00:00.000Z":
+    if data["lastUpdatedAtSource"] == f"{date.year}-{month}-{day_minus_two}T00:00:00.000Z":
         cases_before = data["infected"]
         deaths_before = data["deceased"]
-new_cases = total_confirmed["France"] - cases_before
-new_deaths = total_deaths["France"] - deaths_before
+try:
+    new_cases = total_confirmed["France"] - cases_before
+except:
+    new_cases = "?"
+try:
+    new_deaths = total_deaths["France"] - deaths_before
+except:
+    new_deaths = "?"
 
 #  On actualise les données sur Google Sheets
 x = 3
 for country in total_confirmed:
     sheet.update_cell(4, x, total_confirmed[country])
-    sheet.update_cell(5, x, (total_confirmed[country] * 100000) / population[country])
+    try:
+        sheet.update_cell(5, x, (total_confirmed[country] * 100000) / population[country])
+    except:
+        print("Certaines données n'ont pas été mises à jour !")
     x += 1
 
 x = 3
 for country in total_deaths:
     sheet.update_cell(6, x, total_deaths[country])
-    sheet.update_cell(7, x, (total_deaths[country] * 100000) / population[country])
+    try:
+        sheet.update_cell(7, x, (total_deaths[country] * 100000) / population[country])
+    except:
+        print("Certaines données n'ont pas été mises à jour !")
     x += 1
 
-if sheet.cell(12, 2).value != f"{date.day - 1}/{date.month}/{date.year}":
-    insert_row = ["", f"{date.day - 1}/{date.month}/{date.year}", new_cases, new_deaths, "", rea_auvergne_rhone_alpes, hosp_auvergne_rhone_alpes, dc_auvergne_rhone_alpes]
+if sheet.cell(12, 2).value != f"{day_minus_one}/{date.month}/{date.year}":
+    insert_row = ["", f"{day_minus_one}/{date.month}/{date.year}", new_cases, new_deaths, "", rea_auvergne_rhone_alpes, hosp_auvergne_rhone_alpes, dc_auvergne_rhone_alpes]
     sheet.insert_row(insert_row, 12)
