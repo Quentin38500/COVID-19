@@ -1,6 +1,6 @@
 # COVID-19
 ## Description
-This project was a python script that collected COVID 19 data for UK, Sweden, Spain, Italy, Germany and more detailed data for France and Auvergne-Rhône-Alpes region.
+This project is a python script that collects COVID 19 data for UK, Sweden, Spain, Italy, Germany and more detailed data for France and Auvergne-Rhône-Alpes region.
 ## Skills
 - Python
     - Google Drive, Sheets API
